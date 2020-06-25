@@ -778,6 +778,21 @@ function SetupProject(project)
         project.AddCompilerOption(_T("/Yc\"") + PCHFileName + _T("\""));
     }
 
+    if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("gcc*")))
+        project.SetVar(_T("WX_COMPILER"), _T("gcc"), false);
+    else if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("msvc*")))
+        project.SetVar(_T("WX_COMPILER"), _T("vc"), false);
+    else if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("bcc*")))
+        project.SetVar(_T("WX_COMPILER"), _T("bcc"), false);
+    else if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("ow")))
+        project.SetVar(_T("WX_COMPILER"), _T("wat"), false);
+    else
+        project.SetVar(_T("WX_COMPILER"), _T(""), false);
+
+    project.SetVar(_T("WX_CFG"), Configuration, false);
+
+    project.SetVar(_T("WX_VERSION"), GetWxVersionStr(true), false);
+
     // enable compiler warnings (project-wide)
     WarningsOn(project, Wizard.GetCompilerID());
 
@@ -907,21 +922,38 @@ function SetupTarget(target, is_debug)
     }
     else if (PLATFORM == PLATFORM_MSW)
     {
-        local libdir = LibPath + _T("/msw");
-        if (IsUnicode)
-            libdir = libdir + _T("u");
-        if (is_debug && !IsPartialDebug)
+        local libdir = WxPath + _T("/lib/");
+
+        if (IsDLL)
+            libdir = libdir + _T("$(WX_COMPILER)_dll") + _T("$(WX_CFG)");
+        else
+            libdir = libdir + _T("$(WX_COMPILER)_lib") + _T("$(WX_CFG)");
+
+        local libheaderdir = libdir + _T("/msw$(WX_SUFFIX)");
+
+        if (IsUnicode && !is_debug)
         {
-            target.AddIncludeDir(libdir + _T("d"));
-            target.AddLibDir(LibPath);
-            target.AddResourceIncludeDir(libdir + _T("d"));
+            target.SetVar(_T("WX_SUFFIX"), _T("u"), false);
+        }
+        else if (IsUnicode && is_debug && IsPartialDebug)
+        {
+            target.SetVar(_T("WX_SUFFIX"), _T("u"), false);
+        }
+        else if (IsUnicode && is_debug && !IsPartialDebug)
+        {
+            target.SetVar(_T("WX_SUFFIX"), _T("ud"), false);
+        }
+        else if (!IsUnicode && is_debug && !IsPartialDebug)
+        {
+            target.SetVar(_T("WX_SUFFIX"), _T("d"), false);
         }
         else
         {
-            target.AddIncludeDir(libdir);
-            target.AddLibDir(LibPath);
-            target.AddResourceIncludeDir(libdir);
+            target.SetVar(_T("WX_SUFFIX"), _T(""), false);
         }
+        target.AddIncludeDir(libheaderdir);
+        target.AddLibDir(libdir);
+        target.AddResourceIncludeDir(libheaderdir);
 
         /* Modified and added */
         if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("msvc*")) && is_debug && !IsPartialDebug)
@@ -1020,7 +1052,7 @@ function SetupTarget(target, is_debug)
         /* Now Add the required Libraries */
         if (IsMonolithic)
         {
-            target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + LibSuffix);
+            target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + LibSuffix);
             if (!IsDLL)
             {
                 target.AddLinkLib(LibPrefix + _T("wxpng") + LibDebugSuffix + LibSuffix);
@@ -1032,29 +1064,29 @@ function SetupTarget(target, is_debug)
         else
         {
             // Check and add additional libraries
-            if (LibWxRichText) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_richtext") + LibSuffix);
-            if (LibWxXrc) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_xrc") + LibSuffix);
-            if (LibWxAdvUI) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_aui") + LibSuffix);
+            if (LibWxRichText) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_richtext") + LibSuffix);
+            if (LibWxXrc) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_xrc") + LibSuffix);
+            if (LibWxAdvUI) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_aui") + LibSuffix);
             if (LibWxOdbc)
             {
-                target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_dbgrid") + LibSuffix);
-                target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_odbc") + LibSuffix);
+                target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_dbgrid") + LibSuffix);
+                target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + _T("$(WX_SUFFIX)") + _T("_odbc") + LibSuffix);
             }
-            if (LibWxMedia) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_media") + LibSuffix);
-            if (LibWxNet) target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_net") + LibSuffix);
-            if (LibWxOpengl) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_gl") + LibSuffix);
-            if (LibWxQa) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_qa") + LibSuffix);
+            if (LibWxMedia) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_media") + LibSuffix);
+            if (LibWxNet) target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + _T("$(WX_SUFFIX)") + _T("_net") + LibSuffix);
+            if (LibWxOpengl) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_gl") + LibSuffix);
+            if (LibWxQa) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_qa") + LibSuffix);
             // Now comes the core libraries
-            if (LibWxXml) target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_xml") + LibSuffix);
-            if (LibWxAdv) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_adv") + LibSuffix);
-            if (LibWxHtml) target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_html") + LibSuffix);
-            target.AddLinkLib(LibPrefix + _T("wxmsw") + LibWxVer + LibUnicSuffix + LibDebugSuffix + _T("_core") + LibSuffix);
-            target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + LibUnicSuffix + LibDebugSuffix + LibSuffix);
+            if (LibWxXml) target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + _T("$(WX_SUFFIX)") + _T("_xml") + LibSuffix);
+            if (LibWxAdv) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_adv") + LibSuffix);
+            if (LibWxHtml) target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_html") + LibSuffix);
+            target.AddLinkLib(LibPrefix + _T("wxmsw") + _T("$(WX_VERSION)") + _T("$(WX_SUFFIX)") + _T("_core") + LibSuffix);
+            target.AddLinkLib(LibPrefix + _T("wxbase") + LibWxVer + _T("$(WX_SUFFIX)") + LibSuffix);
             target.AddLinkLib(LibPrefix + _T("wxpng") + LibDebugSuffix + LibSuffix);
             if (LibWxJpeg) target.AddLinkLib(LibPrefix + _T("wxjpeg") + LibDebugSuffix + LibSuffix);
             if (LibWxTiff) target.AddLinkLib(LibPrefix + _T("wxtiff") + LibDebugSuffix + LibSuffix);
             target.AddLinkLib(LibPrefix + _T("wxzlib") + LibDebugSuffix + LibSuffix);
-            if (LibWxRegex) target.AddLinkLib(LibPrefix + _T("wxregex") + LibUnicSuffix + LibDebugSuffix + LibSuffix);
+            if (LibWxRegex) target.AddLinkLib(LibPrefix + _T("wxregex") + _T("$(WX_SUFFIX)") + LibSuffix);
             if (LibWxExpat) target.AddLinkLib(LibPrefix + _T("wxexpat") + LibDebugSuffix + LibSuffix);
         }
     }
