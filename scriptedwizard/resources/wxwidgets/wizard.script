@@ -602,7 +602,6 @@ function GetFilesDir()
 // setup the already created project
 function SetupProject(project)
 {
-    local libdir;
     SetupAddlLibs();
     // set project options
     if (PLATFORM != PLATFORM_MSW)
@@ -642,9 +641,6 @@ function SetupProject(project)
     {
         project.AddIncludeDir(WxPath + _T("/include"));
         project.AddResourceIncludeDir(WxPath + _T("/include"));
-        libdir = LibPath + _T("/msw");
-        if (IsUnicode)
-            libdir = libdir + _T("u");
 
         /* Add standard and special compiler options and libraries */
         if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("msvc*")))
