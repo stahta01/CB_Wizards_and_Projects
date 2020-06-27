@@ -347,14 +347,7 @@ function OnLeave_WxConf(fwd)
         else
             lib_unic_suffix = _T("");
 
-        if (WxVersion == 0)
-            lib_wxver = _T("26");
-        else if (WxVersion == 1)
-            lib_wxver = _T("28");
-        else if (WxVersion == 2)
-            lib_wxver = _T("30");
-        else if (WxVersion == 3)
-            lib_wxver = _T("31");
+        lib_wxver = GetWxVersionStr(true);
 
         // Now set the global variables
         LibPrefix = lib_prefix; // Prefix of lib name
@@ -500,14 +493,7 @@ function OnLeave_WxConfUnix(fwd)
             WantPCH = false;
         }
 
-        if (WxVersion == 0)
-            LibWxVer = _T("2.6");
-        else if (WxVersion == 1)
-            LibWxVer = _T("2.8");
-        else if (WxVersion == 2)
-            LibWxVer = _T("3.0");
-        else if (WxVersion == 3)
-            LibWxVer = _T("3.1");
+        LibWxVer = GetWxVersionStr(false);
 
         // Ask the user whether wizard shall add PCH support when empty Project is selected
         if (IsEmpty && WantPCH)
@@ -1382,5 +1368,37 @@ function SetupAddlLibs()
         LibWxTiff = (tempLibArray.Index(_T("wxTiff")) >=0);
         LibWxRegex = (tempLibArray.Index(_T("wxRegex")) >=0);
         LibWxExpat = (tempLibArray.Index(_T("wxExpat")) >=0);
+    }
+}
+
+function GetWxVersionStr(nodot)
+{
+    if (nodot)
+    {
+        local nodot_version;
+        if (WxVersion == 0)
+            nodot_version = _T("26");
+        else if (WxVersion == 1)
+            nodot_version = _T("28");
+        else if (WxVersion == 2)
+            nodot_version = _T("30");
+        else if (WxVersion == 3)
+            nodot_version = _T("31");
+
+        return nodot_version;
+    }
+    else
+    {
+        local dot_version;
+        if (WxVersion == 0)
+            dot_version = _T("2.6");
+        else if (WxVersion == 1)
+            dot_version = _T("2.8");
+        else if (WxVersion == 2)
+            dot_version = _T("3.0");
+        else if (WxVersion == 3)
+            dot_version = _T("3.1");
+
+        return dot_version;
     }
 }
