@@ -305,34 +305,34 @@ function OnLeave_WxConf(fwd)
         local libFullPath;
         if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("gcc*")))
         {
-            lib = lib + _T("gcc_");
+            lib = lib + _T("gcc");
             lib_prefix = _T("lib");
             lib_suffix = _T(".a");
         }
         else if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("msvc*")))
         {
-            lib = lib + _T("vc_");
+            lib = lib + _T("vc");
             lib_prefix = _T("");
             lib_suffix = _T(".lib");
         }
         else if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("bcc*")))
         {
-            lib = lib + _T("bcc_");
+            lib = lib + _T("bcc");
             lib_prefix = _T("");
             lib_suffix = _T(".lib");
         }
         else if (GetCompilerFactory().CompilerInheritsFrom(Wizard.GetCompilerID(), _T("ow")))
         {
-            lib = lib + _T("wat_");
+            lib = lib + _T("wat");
             lib_prefix = _T("");
             lib_suffix = _T(".lib");
         }
 
 
         if (IsDLL)
-            lib = lib + _T("dll");
+            lib = lib + _T("_dll");
         else
-            lib = lib + _T("lib");
+            lib = lib + _T("_lib");
 
         lib = lib + Configuration;
 
